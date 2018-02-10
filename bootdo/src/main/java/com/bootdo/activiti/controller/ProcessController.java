@@ -2,6 +2,8 @@ package com.bootdo.activiti.controller;
 
 import com.bootdo.activiti.service.ProcessService;
 import com.bootdo.activiti.vo.ProcessVO;
+import com.bootdo.common.config.Constant;
+import com.bootdo.common.controller.BaseController;
 import com.bootdo.common.utils.PageUtils;
 import com.bootdo.common.utils.R;
 import org.activiti.engine.ActivitiException;
@@ -27,7 +29,7 @@ import java.util.zip.ZipInputStream;
 
 @RequestMapping("activiti/process")
 @RestController
-public class ProcessController {
+public class ProcessController extends BaseController{
 
     @Autowired
     private RepositoryService repositoryService;
@@ -64,6 +66,9 @@ public class ProcessController {
     @PostMapping("/save")
     @Transactional(readOnly = false)
     public R deploy(String exportDir, String category, MultipartFile file) {
+        if (Constant.DEMO_ACCOUNT.equals(getUsername())) {
+            return R.error(1, "演示系统不允许修改,完整体验请部署程序");
+        }
         String message = "";
         String fileName = file.getOriginalFilename();
         try {
@@ -114,6 +119,9 @@ public class ProcessController {
      */
     @RequestMapping(value = "/convertToModel/{procDefId}")
     public R convertToModel(@PathVariable("procDefId") String procDefId, RedirectAttributes redirectAttributes) throws UnsupportedEncodingException, XMLStreamException {
+        if (Constant.DEMO_ACCOUNT.equals(getUsername())) {
+            return R.error(1, "演示系统不允许修改,完整体验请部署程序");
+        }
         org.activiti.engine.repository.Model modelData = null;
         try {
             modelData = processService.convertToModel(procDefId);
@@ -137,7 +145,20 @@ public class ProcessController {
 
     @PostMapping("/remove")
     public R remove(String id){
+        if (Constant.DEMO_ACCOUNT.equals(getUsername())) {
+            return R.error(1, "演示系统不允许修改,完整体验请部署程序");
+        }
         repositoryService.deleteDeployment(id,true);
+        return R.ok();
+    }
+    @PostMapping("/batchRemove")
+    public R batchRemove(@RequestParam("ids[]") String[] ids) {
+        if (Constant.DEMO_ACCOUNT.equals(getUsername())) {
+            return R.error(1, "演示系统不允许修改,完整体验请部署程序");
+        }
+        for (String id : ids) {
+            repositoryService.deleteDeployment(id,true);
+        }
         return R.ok();
     }
 }
